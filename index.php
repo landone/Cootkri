@@ -14,12 +14,7 @@ session_start();
 
 		<?php
 			
-			if (isset($_SESSION['userID'])) {
-				
-				echo "Logged in as: ".$_SESSION['username']."<br>";
-				
-			}
-			else if (isset($_POST['login-submit'])) {
+			if (isset($_POST['login-submit'])) {
 				
 				require "database.php";
 				
@@ -27,44 +22,72 @@ session_start();
 				
 				if ($conn->connect_errno) {
 					echo "SQL Database connection failed<br>";
-					die();
 				}
-				
-				$usr = $_POST['user'];
-				$pwd = $_POST['pass'];
-				
-				if (!empty($usr) && !empty($pwd)) {
+				else {
 					
-					$query = "SELECT * FROM users WHERE uid='".$usr."' AND pwd='".$pwd."';";
-					$result = $conn->query($query);
-					if (!$result){
-						echo "Query failure<br>";
-					}
-					else {
-						$row = $result->fetch_row();
-						if (!$row) {
-							echo "Incorrect credentials<br>";
+					$usr = $_POST['user'];
+					$pwd = $_POST['pass'];
+					$pattern = '/^[a-zA-Z0-9!@#$%^&*()\-=_+]*$/';
+					
+					if (preg_match($pattern, $usr) && preg_match($pattern, $pwd)) {
+						
+						$query = "SELECT * FROM users WHERE uid='".$usr."' AND pwd='".$pwd."';";
+						$result = $conn->query($query);
+						if (!$result){
+							echo "Query failure<br>";
 						}
 						else {
-							session_start();
-							$_SESSION['userID'] = $row[0];
-							$_SESSION['username'] = $row[1];
-							echo "Logged in as: ".$_SESSION['username']."<br>";
+							
+							$row = $result->fetch_row();
+							if (!$row) {
+								echo "Incorrect credentials<br>";
+							}
+							else {
+								$_SESSION['userID'] = $row[0];
+								$_SESSION['username'] = $row[1];
+								$result->free_result();
+								$date = getdate();
+								$date = $date["hours"].":".$date["minutes"].":".$date["seconds"]." ".$date["month"]." ".$date["mday"].", ".$date["year"];
+								$query = "UPDATE `users` SET `ip`='".$_SERVER['REMOTE_ADDR']."', `last_visit`='".$date."' WHERE `id`='".$_SESSION['userID']."';";
+								$conn->query($query);
+							}
+							
 						}
-						$result->free_result();
+						
+					}
+					else {
+						
+						echo "Invalid characters used<br>";
+						
 					}
 					
 				}
-				
 				$conn->close();
+				
+			}
+			else if (isset($_POST['logout-submit'])) {
+				
+				unset($_SESSION['userID']);
+				unset($_SESSION['username']);
+				echo "Logged out<br>";
+				
+			}
+			
+			if (isset($_SESSION['userID'])) {
+				
+				echo "Logged in as: ".$_SESSION['username']."<br>";
+				echo "<input type='submit' name='logout-submit' value='Logout'><br><br>";
+				
+			}
+			else {
+				
+				echo "<input type='text' id='user' name='user' placeholder='Username' ><br><br>
+				<input type='password' id='pass' name='pass' placeholder='Password'><br><br>
+				<input type='submit' name='login-submit' value='Login'><br><br>";
 				
 			}
 			
 		?>
-
-		<input type="text" id="user" name="user" placeholder="Username" ><br><br>
-		<input type="password" id="pass" name="pass" placeholder="Password"><br><br>
-		<input type="submit" name="login-submit" value="Login"><br><br>
 
 	</form>
 
