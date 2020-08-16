@@ -1,5 +1,6 @@
 <?php
 
+require "record_ip.php";
 session_start();
 
 ?>
