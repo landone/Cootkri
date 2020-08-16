@@ -78,6 +78,9 @@ session_start();
 				echo "Logged in as: ".$_SESSION['username']."<br>";
 				echo "<input type='submit' name='logout-submit' value='Logout'><br><br>";
 				
+				require "directory.php";
+				echoDir("./downloads/".$_SESSION['username']);
+				
 			}
 			else {
 				
